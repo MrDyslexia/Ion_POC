@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import {
   View,
@@ -24,13 +22,13 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  Check,
   X,
   CheckCircle,
   AlertTriangle,
   Plug,
   Waves,
-  Circle,
+  Radio,
+  Loader,
 } from "lucide-react-native"
 import { useAudioStream } from "../hooks/useAudioStream_ion"
 import DeviceInfo from "react-native-device-info"
@@ -157,6 +155,231 @@ const Sidebar: React.FC<{
   </>
 )
 
+const PulseAnimation: React.FC<{ isActive: boolean; color: string }> = ({ isActive, color }) => {
+  const pulseAnim = React.useRef(new Animated.Value(1)).current
+  const opacityAnim = React.useRef(new Animated.Value(0.7)).current
+
+  React.useEffect(() => {
+    if (isActive) {
+      Animated.loop(
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(pulseAnim, {
+              toValue: 1.3,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(pulseAnim, {
+              toValue: 1,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.sequence([
+            Animated.timing(opacityAnim, {
+              toValue: 0.2,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(opacityAnim, {
+              toValue: 0.7,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      ).start()
+    } else {
+      pulseAnim.setValue(1)
+      opacityAnim.setValue(0.7)
+    }
+  }, [isActive, pulseAnim, opacityAnim])
+
+  if (!isActive) return null
+
+  return (
+    <Animated.View
+      style={[
+        stylesWatch.pulseRing,
+        {
+          borderColor: color,
+          transform: [{ scale: pulseAnim }],
+          opacity: opacityAnim,
+        },
+      ]}
+    />
+  )
+}
+
+const ConnectionAnimation: React.FC<{ isConnecting: boolean }> = ({ isConnecting }) => {
+  const spinAnim = React.useRef(new Animated.Value(0)).current
+  const scaleAnim = React.useRef(new Animated.Value(1)).current
+  const opacityAnim = React.useRef(new Animated.Value(1)).current
+
+  React.useEffect(() => {
+    if (isConnecting) {
+      // Rotación continua
+      Animated.loop(
+        Animated.timing(spinAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        })
+      ).start()
+
+      // Pulso suave
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.15,
+            duration: 750,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 750,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start()
+
+      // Fade in/out
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacityAnim, {
+            toValue: 0.6,
+            duration: 750,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 750,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start()
+    } else {
+      spinAnim.setValue(0)
+      scaleAnim.setValue(1)
+      opacityAnim.setValue(1)
+    }
+  }, [isConnecting, spinAnim, scaleAnim, opacityAnim])
+
+  if (!isConnecting) return null
+
+  const spin = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  })
+
+  return (
+    <Animated.View
+      style={[
+        stylesWatch.connectionSpinner,
+        {
+          transform: [{ rotate: spin }, { scale: scaleAnim }],
+          opacity: opacityAnim,
+        },
+      ]}
+    >
+      <Loader size={24} color="#788FA9" />
+    </Animated.View>
+  )
+}
+
+const AudioWaveIndicator: React.FC<{ isActive: boolean }> = ({ isActive }) => {
+  const wave1 = React.useRef(new Animated.Value(0.3)).current
+  const wave2 = React.useRef(new Animated.Value(0.5)).current
+  const wave3 = React.useRef(new Animated.Value(0.7)).current
+
+  React.useEffect(() => {
+    if (isActive) {
+      Animated.loop(
+        Animated.stagger(150, [
+          Animated.sequence([
+            Animated.timing(wave1, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: false,
+            }),
+            Animated.timing(wave1, {
+              toValue: 0.3,
+              duration: 400,
+              useNativeDriver: false,
+            }),
+          ]),
+          Animated.sequence([
+            Animated.timing(wave2, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: false,
+            }),
+            Animated.timing(wave2, {
+              toValue: 0.5,
+              duration: 400,
+              useNativeDriver: false,
+            }),
+          ]),
+          Animated.sequence([
+            Animated.timing(wave3, {
+              toValue: 1,
+              duration: 400,
+              useNativeDriver: false,
+            }),
+            Animated.timing(wave3, {
+              toValue: 0.7,
+              duration: 400,
+              useNativeDriver: false,
+            }),
+          ]),
+        ])
+      ).start()
+    } else {
+      wave1.setValue(0.3)
+      wave2.setValue(0.5)
+      wave3.setValue(0.7)
+    }
+  }, [isActive, wave1, wave2, wave3])
+
+  return (
+    <View style={stylesWatch.audioWaveContainer}>
+      <Animated.View
+        style={[
+          stylesWatch.audioWaveBar,
+          {
+            height: wave1.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['20%', '100%'],
+            }),
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          stylesWatch.audioWaveBar,
+          {
+            height: wave2.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['20%', '100%'],
+            }),
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          stylesWatch.audioWaveBar,
+          {
+            height: wave3.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['20%', '100%'],
+            }),
+          },
+        ]}
+      />
+    </View>
+  )
+}
+
 const MainScreen: React.FC = () => {
   const defaultServerUrl = "wss://techmark-ai.com/asr/ws"
   const {
@@ -180,6 +403,7 @@ const MainScreen: React.FC = () => {
 
   const [showSidebar, setShowSidebar] = React.useState<boolean>(false)
   const [tempServerUrl, setTempServerUrl] = React.useState<string>(serverUrl)
+  const [isConnecting, setIsConnecting] = React.useState<boolean>(false)
 
   const sidebarTranslateX = React.useRef(new Animated.Value(-320)).current
   const backdropOpacity = React.useRef(new Animated.Value(0)).current
@@ -218,36 +442,60 @@ const MainScreen: React.FC = () => {
     }
   }, [showSidebar, sidebarTranslateX, backdropOpacity])
 
+  const prevConnectedRef = React.useRef(isConnected)
+  React.useEffect(() => {
+    const prevConnected = prevConnectedRef.current
+    if (prevConnected !== isConnected) {
+      setIsConnecting(false)
+    }
+    prevConnectedRef.current = isConnected
+  }, [isConnected])
+
   React.useEffect(() => {
     console.log("[v2] MainScreen: Montado, iniciando conexión a:", serverUrl)
     NavigationBar.setHidden(true)
+    setIsConnecting(true)
     connect()
+    // Simular tiempo de conexión
+    setTimeout(() => setIsConnecting(false), 2000)
 
     return () => {
       console.log("[v2] MainScreen: Desmontando...")
     }
   }, [connect])
 
+  const handleConnect = () => {
+    setIsConnecting(true)
+    connect()
+    // Simular tiempo de conexión de 2 segundos
+    setTimeout(() => setIsConnecting(false), 2000)
+  }
+
   const handleServerUrlUpdate = () => {
     updateServerUrl(tempServerUrl)
+    setIsConnecting(true)
     connect(tempServerUrl)
+    setTimeout(() => setIsConnecting(false), 2000)
     toggleSettings()
   }
 
   const getStatusColor = () => {
     if (!esModeloDeReloj) return undefined
+    if (isConnecting) return stylesWatch.connectingWatch
     if (isRecording) return stylesWatch.recordingWatch
     return isConnected ? stylesWatch.connectedWatch : stylesWatch.disconnectedWatch
   }
 
   const getStatusText = () => {
+    if (isConnecting) return "Conectando..."
     if (isRecording) return "Grabando"
     return isConnected ? "Conectado" : "Desconectado"
   }
 
   const getStatusIcon = () => {
-    if (isRecording) return <Circle size={16} fill="#fff" color="#fff" />
-    return isConnected ? <Check size={16} color="#fff" /> : <X size={16} color="#fff" />
+    if (isConnecting) return <Loader size={20} color="#fff" />
+    if (isRecording) return <Waves size={20} color="#fff" />
+    return isConnected ? <Radio size={20} color="#fff" /> : <Plug size={20} color="#fff" />
   }
 
   if (!esModeloDeReloj) {
@@ -396,31 +644,86 @@ const MainScreen: React.FC = () => {
   return (
     <SafeAreaView style={stylesWatch.container}>
       <ScrollView contentContainerStyle={stylesWatch.scrollContent}>
+        {/* Header compacto con logo/nombre */}
+        <View style={stylesWatch.headerWatch}>
+          <Text style={stylesWatch.appName}>ION</Text>
+        </View>
+
+        {/* Indicador de estado principal con animaciones */}
         <View style={stylesWatch.statusContainer}>
-          <View style={[stylesWatch.statusIndicator, getStatusColor()]}>{getStatusIcon()}</View>
+          <View style={stylesWatch.statusRingContainer}>
+            {isConnecting && <ConnectionAnimation isConnecting={isConnecting} />}
+            <PulseAnimation isActive={isRecording} color="#27618E" />
+            <View style={[stylesWatch.statusRing, getStatusColor()]}>
+              <View style={stylesWatch.statusIconContainer}>{getStatusIcon()}</View>
+            </View>
+          </View>
           <Text style={stylesWatch.statusLabel}>{getStatusText()}</Text>
         </View>
 
+        {/* Indicador visual de audio activo */}
+        {isRecording && (
+          <View style={stylesWatch.audioIndicatorContainer}>
+            <AudioWaveIndicator isActive={isRecording} />
+            <Text style={stylesWatch.audioIndicatorText}>Transmitiendo audio</Text>
+          </View>
+        )}
+
+        {/* Estadísticas compactas cuando está grabando */}
+        {isRecording && (
+          <View style={stylesWatch.statsCompact}>
+            <View style={stylesWatch.statCompactItem}>
+              <Text style={stylesWatch.statCompactValue}>{stats.chunks}</Text>
+              <Text style={stylesWatch.statCompactLabel}>Chunks</Text>
+            </View>
+            <View style={stylesWatch.statCompactDivider} />
+            <View style={stylesWatch.statCompactItem}>
+              <Text style={stylesWatch.statCompactValue}>{stats.transcriptions}</Text>
+              <Text style={stylesWatch.statCompactLabel}>Textos</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Botón de acción principal */}
         <View style={stylesWatch.mainActionContainer}>
           {(() => {
-            if (!isConnected) {
+            if (isConnecting) {
               return (
-                <TouchableOpacity style={[stylesWatch.mainButton, stylesWatch.connectButton]} onPress={() => connect()}>
-                  <Plug size={36} color="#fff" style={stylesWatch.mainButtonIconComponent} />
+                <View style={[stylesWatch.mainButton, stylesWatch.connectingButton]}>
+                  <ConnectionAnimation isConnecting={isConnecting} />
+                  <Text style={stylesWatch.mainButtonText}>Conectando</Text>
+                </View>
+              )
+            } else if (!isConnected) {
+              return (
+                <TouchableOpacity
+                  style={[stylesWatch.mainButton, stylesWatch.connectButton]}
+                  onPress={handleConnect}
+                  activeOpacity={0.8}
+                >
+                  <Plug size={28} color="#fff" style={stylesWatch.mainButtonIconComponent} />
                   <Text style={stylesWatch.mainButtonText}>Conectar</Text>
                 </TouchableOpacity>
               )
             } else if (isRecording) {
               return (
-                <TouchableOpacity style={[stylesWatch.mainButton, stylesWatch.stopButton]} onPress={stopRecording}>
-                  <Square size={36} color="#fff" style={stylesWatch.mainButtonIconComponent} />
-                  <Text style={stylesWatch.mainButtonText}>Parar</Text>
+                <TouchableOpacity
+                  style={[stylesWatch.mainButton, stylesWatch.stopButton]}
+                  onPress={stopRecording}
+                  activeOpacity={0.8}
+                >
+                  <Square size={28} color="#fff" style={stylesWatch.mainButtonIconComponent} />
+                  <Text style={stylesWatch.mainButtonText}>Detener</Text>
                 </TouchableOpacity>
               )
             } else {
               return (
-                <TouchableOpacity style={[stylesWatch.mainButton, stylesWatch.recordButton]} onPress={startRecording}>
-                  <Mic size={36} color="#fff" style={stylesWatch.mainButtonIconComponent} />
+                <TouchableOpacity
+                  style={[stylesWatch.mainButton, stylesWatch.recordButton]}
+                  onPress={startRecording}
+                  activeOpacity={0.8}
+                >
+                  <Mic size={28} color="#fff" style={stylesWatch.mainButtonIconComponent} />
                   <Text style={stylesWatch.mainButtonText}>Grabar</Text>
                 </TouchableOpacity>
               )
@@ -428,17 +731,22 @@ const MainScreen: React.FC = () => {
           })()}
         </View>
 
-        {isConnected && !isRecording && (
-          <TouchableOpacity style={stylesWatch.secondaryButton} onPress={disconnect}>
+        {/* Botón secundario de desconexión */}
+        {isConnected && !isRecording && !isConnecting && (
+          <TouchableOpacity style={stylesWatch.secondaryButton} onPress={disconnect} activeOpacity={0.7}>
+            <X size={14} color="#788FA9" style={stylesWatch.secondaryButtonIcon} />
             <Text style={stylesWatch.secondaryButtonText}>Desconectar</Text>
           </TouchableOpacity>
         )}
 
+        {/* Mensajes de error */}
         {error && (
           <View style={stylesWatch.errorContainer}>
             <View style={stylesWatch.errorContent}>
-              <AlertTriangle size={14} color="#fca5a5" style={stylesWatch.errorIconComponent} />
-              <Text style={stylesWatch.errorText}>{error}</Text>
+              <AlertTriangle size={12} color="#fca5a5" style={stylesWatch.errorIconComponent} />
+              <Text style={stylesWatch.errorText} numberOfLines={2}>
+                {error}
+              </Text>
             </View>
           </View>
         )}
@@ -504,7 +812,6 @@ const stylesPhone = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
   },
-  // Changed content layout to remove flexDirection row from content
   content: {
     flex: 1,
   },
@@ -819,99 +1126,211 @@ const stylesPhone = StyleSheet.create({
   },
 })
 
-// Estilos para wearables
 const stylesWatch = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: "#00234A", // prussian-blue
   },
   scrollContent: {
     flexGrow: 1,
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    justifyContent: "flex-start",
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+  },
+  headerWatch: {
+    alignItems: "center",
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  appName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#788FA9", // air-force-blue
+    letterSpacing: 2,
   },
   statusContainer: {
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 12,
   },
-  statusIndicator: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  statusRingContainer: {
+    position: "relative",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
+    marginBottom: 6,
+  },
+  pulseRing: {
+    position: "absolute",
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 3,
+  },
+  connectionSpinner: {
+    position: "absolute",
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  statusRing: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#072C5C", // oxford-navy
+  },
+  statusIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   connectedWatch: {
-    backgroundColor: "#10b981",
+    backgroundColor: "#27618E", // baltic-blue
   },
   disconnectedWatch: {
-    backgroundColor: "#ef4444",
+    backgroundColor: "#4D6C95", // smart-blue
+    opacity: 0.5,
+  },
+  connectingWatch: {
+    backgroundColor: "#4D6C95", // smart-blue
+    opacity: 0.8,
   },
   recordingWatch: {
-    backgroundColor: "#f59e0b",
+    backgroundColor: "#27618E", // baltic-blue
   },
   statusLabel: {
-    fontSize: 14,
-    color: "#fff",
+    fontSize: 11,
+    color: "#788FA9", // air-force-blue
     fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  audioIndicatorContainer: {
+    alignItems: "center",
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  audioWaveContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 30,
+    gap: 4,
+    marginBottom: 4,
+  },
+  audioWaveBar: {
+    width: 4,
+    backgroundColor: "#788FA9", // air-force-blue
+    borderRadius: 2,
+  },
+  audioIndicatorText: {
+    fontSize: 9,
+    color: "#4D6C95", // smart-blue
+    fontWeight: "500",
+  },
+  statsCompact: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#072C5C", // oxford-navy
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+  },
+  statCompactItem: {
+    alignItems: "center",
+    paddingHorizontal: 8,
+  },
+  statCompactValue: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  statCompactLabel: {
+    fontSize: 8,
+    color: "#788FA9", // air-force-blue
+    marginTop: 2,
+  },
+  statCompactDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: "#4D6C95", // smart-blue
   },
   mainActionContainer: {
     width: "100%",
     alignItems: "center",
-    marginVertical: 10,
+    marginVertical: 8,
   },
   mainButton: {
-    width: SCREEN_WIDTH * 0.75,
-    height: SCREEN_WIDTH * 0.75,
-    maxWidth: 140,
-    maxHeight: 140,
+    width: SCREEN_WIDTH * 0.65,
+    height: SCREEN_WIDTH * 0.65,
+    maxWidth: 120,
+    maxHeight: 120,
     borderRadius: 1000,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 5,
+    elevation: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    borderWidth: 3,
+    borderColor: "#072C5C", // oxford-navy
   },
   connectButton: {
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#4D6C95", // smart-blue
+  },
+  connectingButton: {
+    backgroundColor: "#4D6C95", // smart-blue
+    opacity: 0.8,
   },
   recordButton: {
-    backgroundColor: "#ef4444",
+    backgroundColor: "#27618E", // baltic-blue
   },
   stopButton: {
-    backgroundColor: "#10b981",
+    backgroundColor: "#4D6C95", // smart-blue
   },
   mainButtonIconComponent: {
-    marginBottom: 5,
+    marginBottom: 4,
   },
   mainButtonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   secondaryButton: {
-    backgroundColor: "#6b7280",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "transparent",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#4D6C95", // smart-blue
+  },
+  secondaryButtonIcon: {
+    marginRight: 4,
   },
   secondaryButtonText: {
-    color: "#fff",
-    fontSize: 13,
+    color: "#788FA9", // air-force-blue
+    fontSize: 11,
     fontWeight: "600",
   },
   errorContainer: {
-    backgroundColor: "rgba(239, 68, 68, 0.2)",
-    padding: 8,
-    borderRadius: 6,
-    marginTop: 10,
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    padding: 6,
+    borderRadius: 8,
+    marginTop: 8,
     width: "95%",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.3)",
   },
   errorContent: {
     flexDirection: "row",
@@ -919,11 +1338,11 @@ const stylesWatch = StyleSheet.create({
     justifyContent: "center",
   },
   errorIconComponent: {
-    marginRight: 6,
+    marginRight: 4,
   },
   errorText: {
     color: "#fca5a5",
-    fontSize: 11,
+    fontSize: 9,
     textAlign: "center",
     flex: 1,
   },

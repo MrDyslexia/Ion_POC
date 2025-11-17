@@ -1,7 +1,7 @@
 # OSX
 #
 .DS_Store
-
+ios/*
 # Xcode
 #
 build/
@@ -70,6 +70,7 @@ yarn-error.log
 
 # testing
 android/
+
 /coverage
 
 # Yarn
